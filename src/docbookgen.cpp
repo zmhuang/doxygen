@@ -665,12 +665,9 @@ static void generateDocbookForMember(MemberDef *md,FTextStream &t,Definition *de
           writeDocbookString(t,emd->name());
           t << "</term>" << endl;
           t << "                            <listitem>" << endl;
-          if(Config_getBool("REPEAT_BRIEF"))
-          {
-              t << "                                <para>";
-              writeDocbookString(t,emd->briefDescription());
-              t << "</para>" << endl;
-          }
+          t << "                                <para>";
+          writeDocbookString(t,emd->briefDescription());
+          t << "</para>" << endl;
           t << "                            </listitem>" << endl;
           t << "                        </varlistentry>" << endl;
         }
@@ -850,19 +847,25 @@ static void generateDocbookSection(Definition *d,FTextStream &t,MemberList *ml,c
 
   if (detailed) 
   {
-    for (mli.toFirst();(md=mli.current());++mli)
+    if(ml->listType() != MemberListType_decEnumMembers)
     {
-        if (md->documentation().isEmpty() && !Config_getBool("REPEAT_BRIEF"))
+        for (mli.toFirst();(md=mli.current());++mli)
         {
-            continue;
+            if (md->documentation().isEmpty() && !Config_getBool("REPEAT_BRIEF"))
+            {
+                continue;
+            }
+            else
+            {
+                doc_count = 1;
+                break;
+            }
         }
-        doc_count = 1;
-        break;
-    }
 
-    if(doc_count == 0)
-    {
-        return;
+        if(doc_count == 0)
+        {
+            return;
+        }
     }
 
     if (desctitle)
@@ -895,7 +898,10 @@ static void generateDocbookSection(Definition *d,FTextStream &t,MemberList *ml,c
     // to prevent this duplication in the Docbook output, we filter those here.
     if (d->definitionType()!=Definition::TypeFile || md->getNamespaceDef()==0) 
     {
-        if (detailed && md->documentation().isEmpty() && !Config_getBool("REPEAT_BRIEF"))
+        if (detailed
+                && (ml->listType() != MemberListType_decEnumMembers)
+                && md->documentation().isEmpty()
+                && !Config_getBool("REPEAT_BRIEF"))
         {
             continue;
         }
